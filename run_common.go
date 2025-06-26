@@ -1282,7 +1282,7 @@ func (b *Builder) runUsingRuntimeSubproc(isolation define.Isolation, options Run
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("while running runtime: %w", err)
+		return fmt.Errorf("while running command: %w", err)
 	}
 	confwg.Wait()
 	signal.Stop(interrupted)

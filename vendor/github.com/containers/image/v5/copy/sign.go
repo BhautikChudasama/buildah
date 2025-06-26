@@ -59,7 +59,7 @@ func (c *copier) sourceSignatures(ctx context.Context, unparsed private.Unparsed
 	if c.options.RemoveSignatures {
 		sigs = []internalsig.Signature{}
 	} else {
-		c.Printf("%s\n", gettingSignaturesMessage)
+		// c.Printf("%s\n", gettingSignaturesMessage)
 		s, err := unparsed.UntrustedSignatures(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("reading signatures: %w", err)
@@ -67,7 +67,7 @@ func (c *copier) sourceSignatures(ctx context.Context, unparsed private.Unparsed
 		sigs = s
 	}
 	if len(sigs) != 0 {
-		c.Printf("%s\n", checkingDestMessage)
+		// c.Printf("%s\n", checkingDestMessage)
 		if err := c.dest.SupportsSignatures(ctx); err != nil {
 			return nil, fmt.Errorf("Can not copy signatures to %s: %w", transports.ImageName(c.dest.Reference()), err)
 		}

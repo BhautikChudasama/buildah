@@ -600,7 +600,6 @@ func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanc
 		return nil, "", err
 	}
 
-	ic.c.Printf("Writing manifest to image destination\n")
 	manifestDigest, err := manifest.Digest(man)
 	if err != nil {
 		return nil, "", err
@@ -626,13 +625,13 @@ func (ic *imageCopier) copyConfig(ctx context.Context, src types.Image) error {
 		defer ic.c.concurrentBlobCopiesSemaphore.Release(1)
 
 		destInfo, err := func() (types.BlobInfo, error) { // A scope for defer
-			progressPool := ic.c.newProgressPool()
-			defer progressPool.Wait()
-			bar, err := ic.c.createProgressBar(progressPool, false, srcInfo, "config", "done")
-			if err != nil {
-				return types.BlobInfo{}, err
-			}
-			defer bar.Abort(false)
+			// progressPool := ic.c.newProgressPool()
+			// defer progressPool.Wait()
+			// bar, err := ic.c.createProgressBar(progressPool, false, srcInfo, "config", "done")
+			// if err != nil {
+			// 	return types.BlobInfo{}, err
+			// }
+			// defer bar.Abort(false)
 			ic.c.printCopyInfo("config", srcInfo)
 
 			configBlob, err := src.ConfigBlob(ctx)
@@ -640,12 +639,12 @@ func (ic *imageCopier) copyConfig(ctx context.Context, src types.Image) error {
 				return types.BlobInfo{}, fmt.Errorf("reading config blob %s: %w", srcInfo.Digest, err)
 			}
 
-			destInfo, err := ic.copyBlobFromStream(ctx, bytes.NewReader(configBlob), srcInfo, nil, true, false, bar, -1, false)
+			destInfo, err := ic.copyBlobFromStream(ctx, bytes.NewReader(configBlob), srcInfo, nil, true, false, nil, -1, false)
 			if err != nil {
 				return types.BlobInfo{}, err
 			}
 
-			bar.mark100PercentComplete()
+			// bar.mark100PercentComplete()
 			return destInfo, nil
 		}()
 		if err != nil {
@@ -764,16 +763,17 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 		if reused {
 			logrus.Debugf("Skipping blob %s (already present):", srcInfo.Digest)
 			if err := func() error { // A scope for defer
-				label := "skipped: already exists"
+				// label := "skipped: already exists"
 				if reusedBlob.MatchedByTOCDigest {
-					label = "skipped: already exists (found by TOC)"
+					// label = "skipped: already exists (found by TOC)"
 				}
-				bar, err := ic.c.createProgressBar(pool, false, types.BlobInfo{Digest: reusedBlob.Digest, Size: 0}, "blob", label)
-				if err != nil {
-					return err
-				}
-				defer bar.Abort(false)
-				bar.mark100PercentComplete()
+				// label := ""
+				// bar, err := ic.c.createProgressBar(pool, false, types.BlobInfo{Digest: reusedBlob.Digest, Size: 0}, "blob", label)
+				// if err != nil {
+				// 	return err
+				// }
+				// defer bar.Abort(false)
+				// bar.mark100PercentComplete()
 				return nil
 			}(); err != nil {
 				return types.BlobInfo{}, "", err
@@ -797,31 +797,31 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 	// the destination has support for it.
 	if canAvoidProcessingCompleteLayer && ic.c.rawSource.SupportsGetBlobAt() && ic.c.dest.SupportsPutBlobPartial() {
 		reused, blobInfo, err := func() (bool, types.BlobInfo, error) { // A scope for defer
-			bar, err := ic.c.createProgressBar(pool, true, srcInfo, "blob", "done")
-			if err != nil {
-				return false, types.BlobInfo{}, err
-			}
-			hideProgressBar := true
-			defer func() { // Note that this is not the same as defer bar.Abort(hideProgressBar); we need hideProgressBar to be evaluated lazily.
-				bar.Abort(hideProgressBar)
-			}()
+			// bar, err := ic.c.createProgressBar(pool, true, srcInfo, "blob", "done")
+			// if err != nil {
+			// 	return false, types.BlobInfo{}, err
+			// }
+			// hideProgressBar := true
+			// defer func() { // Note that this is not the same as defer bar.Abort(hideProgressBar); we need hideProgressBar to be evaluated lazily.
+			// 	bar.Abort(hideProgressBar)
+			// }()
 
 			proxy := blobChunkAccessorProxy{
 				wrapped: ic.c.rawSource,
-				bar:     bar,
+				bar:     nil,
 			}
 			uploadedBlob, err := ic.c.dest.PutBlobPartial(ctx, &proxy, srcInfo, private.PutBlobPartialOptions{
 				Cache:      ic.c.blobInfoCache,
 				LayerIndex: layerIndex,
 			})
 			if err == nil {
-				if srcInfo.Size != -1 {
-					refill := srcInfo.Size - bar.Current()
-					bar.SetCurrent(srcInfo.Size)
-					bar.SetRefill(refill)
-				}
-				bar.mark100PercentComplete()
-				hideProgressBar = false
+				// if srcInfo.Size != -1 {
+				// 	refill := srcInfo.Size - bar.Current()
+				// 	bar.SetCurrent(srcInfo.Size)
+				// 	bar.SetRefill(refill)
+				// }
+				// bar.mark100PercentComplete()
+				// hideProgressBar = true
 				logrus.Debugf("Retrieved partial blob %v", srcInfo.Digest)
 				return true, updatedBlobInfoFromUpload(srcInfo, uploadedBlob), nil
 			}
@@ -843,11 +843,11 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 
 	// Fallback: copy the layer, computing the diffID if we need to do so
 	return func() (types.BlobInfo, digest.Digest, error) { // A scope for defer
-		bar, err := ic.c.createProgressBar(pool, false, srcInfo, "blob", "done")
-		if err != nil {
-			return types.BlobInfo{}, "", err
-		}
-		defer bar.Abort(false)
+		// bar, err := ic.c.createProgressBar(pool, false, srcInfo, "blob", "done")
+		// if err != nil {
+		// 	return types.BlobInfo{}, "", err
+		// }
+		// defer bar.Abort(false)
 
 		srcStream, srcBlobSize, err := ic.c.rawSource.GetBlob(ctx, srcInfo, ic.c.blobInfoCache)
 		if err != nil {
@@ -855,7 +855,8 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 		}
 		defer srcStream.Close()
 
-		blobInfo, diffIDChan, err := ic.copyLayerFromStream(ctx, srcStream, types.BlobInfo{Digest: srcInfo.Digest, Size: srcBlobSize, MediaType: srcInfo.MediaType, Annotations: srcInfo.Annotations}, diffIDIsNeeded, toEncrypt, bar, layerIndex, emptyLayer)
+		blobInfo, diffIDChan, err := ic.copyLayerFromStream(ctx, srcStream, types.BlobInfo{Digest: srcInfo.Digest, Size: srcBlobSize, MediaType: srcInfo.MediaType, Annotations: srcInfo.Annotations}, diffIDIsNeeded, toEncrypt, nil, layerIndex, emptyLayer)
+
 		if err != nil {
 			return types.BlobInfo{}, "", err
 		}
@@ -885,7 +886,7 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 			}
 		}
 
-		bar.mark100PercentComplete()
+		// bar.mark100PercentComplete()
 		return blobInfo, diffID, nil
 	}()
 }

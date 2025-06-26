@@ -289,6 +289,7 @@ func BuildDockerfiles(ctx context.Context, store storage.Store, options define.B
 				platformOptions.ReportWriter = reporter
 				platformOptions.Err = stderr
 			}
+
 			thisID, thisRef, err := buildDockerfilesOnce(ctx, store, loggerPerPlatform, logPrefix, platformOptions, paths, files)
 			if err != nil {
 				if errorContext := strings.TrimSpace(logPrefix); errorContext != "" {

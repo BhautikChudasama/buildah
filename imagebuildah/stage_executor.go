@@ -1269,9 +1269,9 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 		if len(imgID) > 12 {
 			imgID = imgID[:12]
 		}
-		if s.executor.iidfile == "" {
-			fmt.Fprintf(s.executor.out, "--> %s\n", imgID)
-		}
+		// if s.executor.iidfile == "" {
+		// fmt.Fprintf(s.executor.out, "--> %s\n", imgID)
+		// }
 	}
 
 	// Parse and populate buildOutputOption if needed
@@ -1435,8 +1435,8 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 			s.didExecute = true
 			err := ib.Run(step, s, noRunsRemaining)
 			if err != nil {
-				logrus.Debugf("Error building at step %+v: %v", *step, err)
-				return "", nil, false, fmt.Errorf("building at STEP \"%s\": %w", step.Message, err)
+				// logrus.Debugf("Error building at step %+v: %v", *step, err)
+				return "", nil, false, fmt.Errorf("%w", err)
 			}
 			// In case we added content, retrieve its digest.
 			addedContentSummary := s.getContentSummaryAfterAddingContent()
@@ -1469,7 +1469,7 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 				}
 				imgID, ref, err = s.commit(ctx, createdBy, false, s.output, s.executor.squash, lastStage && lastInstruction)
 				if err != nil {
-					return "", nil, false, fmt.Errorf("committing container for step %+v: %w", *step, err)
+					return "", nil, false, fmt.Errorf("%w", err)
 				}
 				logImageID(imgID)
 				// Generate build output if needed.
@@ -1558,8 +1558,8 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 			canMatchCacheOnlyAfterRun = (step.Command == command.Add || step.Command == command.Copy)
 			if canMatchCacheOnlyAfterRun {
 				if err = ib.Run(step, s, noRunsRemaining); err != nil {
-					logrus.Debugf("Error building at step %+v: %v", *step, err)
-					return "", nil, false, fmt.Errorf("building at STEP \"%s\": %w", step.Message, err)
+					// logrus.Debugf("Error building at step %+v: %v", *step, err)
+					return "", nil, false, fmt.Errorf("%w", err)
 				}
 				// Retrieve the digest info for the content that we just copied
 				// into the rootfs.
@@ -1608,8 +1608,8 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 			// Process the instruction directly.
 			s.didExecute = true
 			if err = ib.Run(step, s, noRunsRemaining); err != nil {
-				logrus.Debugf("Error building at step %+v: %v", *step, err)
-				return "", nil, false, fmt.Errorf("building at STEP \"%s\": %w", step.Message, err)
+				// logrus.Debugf("Error building at step %+v: %v", *step, err)
+				return "", nil, false, fmt.Errorf("%w", err)
 			}
 
 			// In case we added content, retrieve its digest.
@@ -1663,8 +1663,8 @@ func (s *StageExecutor) Execute(ctx context.Context, base string) (imgID string,
 				s.didExecute = true
 				err := ib.Run(step, s, noRunsRemaining)
 				if err != nil {
-					logrus.Debugf("Error building at step %+v: %v", *step, err)
-					return "", nil, false, fmt.Errorf("building at STEP \"%s\": %w", step.Message, err)
+					// logrus.Debugf("Error building at step %+v: %v", *step, err)
+					return "", nil, false, fmt.Errorf("%w", err)
 				}
 			}
 		}

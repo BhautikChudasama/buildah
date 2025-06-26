@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"runtime"
 	"strings"
@@ -614,7 +613,7 @@ func (r *Runtime) copySingleImageFromRegistry(ctx context.Context, imageName str
 			}
 
 			if !isNewer {
-				logrus.Debugf("Skipping pull candidate %s as the image is not newer (pull policy %s)", candidateString, pullPolicy)
+				// logrus.Debugf("Skipping pull candidate %s as the image is not newer (pull policy %s)", candidateString, pullPolicy)
 				continue
 			}
 		}
@@ -627,11 +626,11 @@ func (r *Runtime) copySingleImageFromRegistry(ctx context.Context, imageName str
 		if err := writeDesc(); err != nil {
 			return nil, err
 		}
-		if options.Writer != nil {
-			if _, err := io.WriteString(options.Writer, fmt.Sprintf("Trying to pull %s...\n", candidateString)); err != nil {
-				return nil, err
-			}
-		}
+		// if options.Writer != nil {
+		// 	if _, err := io.WriteString(options.Writer, fmt.Sprintf("Trying to pull %s...\n", candidateString)); err != nil {
+		// 		return nil, err
+		// 	}
+		// }
 		image, err := c.copyToStorage(ctx, srcRef, destRef)
 		if err != nil {
 			logrus.Debugf("Error pulling candidate %s: %v", candidateString, err)

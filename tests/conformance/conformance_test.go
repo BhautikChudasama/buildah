@@ -786,7 +786,7 @@ func buildUsingImagebuilder(t *testing.T, client *docker.Client, test testCase, 
 	executor.Out = output
 	executor.ErrOut = output
 	executor.LogFn = func(format string, args ...any) {
-		fmt.Fprintf(output, "--> %s\n", fmt.Sprintf(format, args...))
+		// fmt.Fprintf(output, "--> %s\n", fmt.Sprintf(format, args...))
 	}
 	// buildah tests might be using transient mounts. replace "@@TEMPDIR@@"
 	// in such specifications with the path of the context directory

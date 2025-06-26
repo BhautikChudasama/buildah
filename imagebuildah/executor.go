@@ -579,22 +579,47 @@ func (b *Executor) buildStage(ctx context.Context, cleanupStages map[int]*StageE
 	b.stagesLock.Lock()
 	stageExecutor := b.startStage(ctx, &stage, stages, output)
 	if stageExecutor.log == nil {
-		stepCounter := 0
+		// stepCounter := 0
 		stageExecutor.log = func(format string, args ...any) {
 			prefix := b.logPrefix
-			if len(stages) > 1 {
-				prefix += fmt.Sprintf("[%d/%d] ", stageIndex+1, len(stages))
+			// SKIP DEFINITION:
+			// #1] If Format starts with FROM:
+			// #2] If Args[0] == RUN then remove the first argument
+			// #3] IF Args[0] == COPY or ADD then skip complete line
+			// #4] IF Args[0] == CMD then skip complete line
+			// #5] If Args[0] == ENTRYPOINT then skip complete line
+			// #6] If Args[0] == LABEL then skip complete line
+			// #7] If Args[0] == ENV then skip complete line
+			// #8] If Args[0] == HEALTHCHECK then skip complete line
+			// #9] If Args[0] == USER then skip complete line
+			// #10] If Args[0] == WORKDIR then skip complete line
+			// #11] If Args[0] == SHELL then skip complete line
+			// #12] If Args[0] == ARG then skip complete line
+			// #13] If Args[0] == STOPSIGNAL then skip complete line
+			// #14] If Args[0] == EXPOSE then skip complete line
+			// #15] If Args[0] == VOLUME then skip complete line
+
+			printInstructions := []string{
+				"RUN",
 			}
-			if !strings.HasPrefix(format, "COMMIT") {
-				stepCounter++
-				prefix += fmt.Sprintf("STEP %d", stepCounter)
-				if stepCounter <= len(stage.Node.Children)+1 {
-					prefix += fmt.Sprintf("/%d", len(stage.Node.Children)+1)
+
+			splitedArgs := []string{}
+			if len(args) > 0 {
+				splitedArgs = strings.Split(args[0].(string), " ")
+			}
+
+			if len(splitedArgs) > 0 && slices.Contains(printInstructions, splitedArgs[0]) {
+				// If the first argument is RUN, then we don't want to
+				// print it, since it will be printed by the stage
+				// executor.
+
+				if len(args) > 0 && splitedArgs[0] == "RUN" {
+					splitedArgs = splitedArgs[1:]
 				}
-				prefix += ": "
+
+				suffix := "\n"
+				fmt.Fprintf(stageExecutor.executor.out, prefix+format+suffix, strings.Join(splitedArgs, " "))
 			}
-			suffix := "\n"
-			fmt.Fprintf(stageExecutor.executor.out, prefix+format+suffix, args...)
 		}
 	}
 	b.stagesLock.Unlock()
@@ -700,10 +725,10 @@ func (b *Executor) Build(ctx context.Context, stages imagebuilder.Stages) (image
 	var cleanupImages []string
 	cleanupStages := make(map[int]*StageExecutor)
 
-	stdout := b.out
-	if b.quiet {
-		b.out = io.Discard
-	}
+	// stdout := b.out
+	// if b.quiet {
+	// b.out = io.Discard
+	// }
 
 	cleanup := func() error {
 		var lastErr error
@@ -1060,13 +1085,14 @@ func (b *Executor) Build(ctx context.Context, stages imagebuilder.Stages) (image
 				logrus.Debugf("assigned names %v to image %q", img.Names, img.ID)
 			}
 			// Report back the caller the tags applied, if any.
-			_, img, err = storageTransport.ResolveReference(dest)
+			_, _, err = storageTransport.ResolveReference(dest)
+			// _, img, err = storageTransport.ResolveReference(dest)
 			if err != nil {
 				return imageID, ref, fmt.Errorf("locating just-written image %q: %w", transports.ImageName(dest), err)
 			}
-			for _, name := range img.Names {
-				fmt.Fprintf(b.out, "Successfully tagged %s\n", name)
-			}
+			// for _, name := range img.Names {
+			// fmt.Fprintf(b.out, "Successfully tagged %s\n", name)
+			// }
 
 		default:
 			if len(b.additionalTags) > 0 {
@@ -1078,16 +1104,17 @@ func (b *Executor) Build(ctx context.Context, stages imagebuilder.Stages) (image
 	if err := cleanup(); err != nil {
 		return "", nil, err
 	}
-	logrus.Debugf("printing final image id %q", imageID)
-	if b.iidfile != "" {
-		if err = os.WriteFile(b.iidfile, []byte("sha256:"+imageID), 0o644); err != nil {
-			return imageID, ref, fmt.Errorf("failed to write image ID to file %q: %w", b.iidfile, err)
-		}
-	} else {
-		if _, err := stdout.Write([]byte(imageID + "\n")); err != nil {
-			return imageID, ref, fmt.Errorf("failed to write image ID to stdout: %w", err)
-		}
-	}
+
+	// logrus.Debugf("printing final image id %q", imageID)
+	// if b.iidfile != "" {
+	// 	if err = os.WriteFile(b.iidfile, []byte("sha256:"+imageID), 0o644); err != nil {
+	// 		return imageID, ref, fmt.Errorf("failed to write image ID to file %q: %w", b.iidfile, err)
+	// 	}
+	// } else {
+	// 	if _, err := stdout.Write([]byte(imageID + "\n")); err != nil {
+	// 		return imageID, ref, fmt.Errorf("failed to write image ID to stdout: %w", err)
+	// 	}
+	// }
 	return imageID, ref, nil
 }
 

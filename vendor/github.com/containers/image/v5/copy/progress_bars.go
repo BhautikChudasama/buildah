@@ -62,7 +62,8 @@ func (c *copier) createProgressBar(pool *mpb.Progress, partial bool, info types.
 	if err := info.Digest.Validate(); err != nil { // digest.Digest.Encoded() panics on failure, so validate explicitly.
 		return nil, err
 	}
-	prefix := fmt.Sprintf("Copying %s %s", kind, info.Digest.Encoded())
+	// prefix := fmt.Sprintf("Copying %s %s", kind, info.Digest.Encoded())
+	prefix := ""
 	// Truncate the prefix (chopping of some part of the digest) to make all progress bars aligned in a column.
 	maxPrefixLen := len("Copying blob ") + shortDigestLen
 	if len(prefix) > maxPrefixLen {

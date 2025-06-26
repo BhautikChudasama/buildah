@@ -934,7 +934,6 @@ func (r *layerStore) load(lockedForWriting bool) (bool, error) {
 		}
 		// Now actually delete the layers
 		for _, layer := range layersToDelete {
-			logrus.Warnf("Found incomplete layer %q, deleting it", layer.ID)
 			err := r.deleteInternal(layer.ID)
 			if err != nil {
 				// Don't return the error immediately, because deleteInternal does not saveLayers();
